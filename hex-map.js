@@ -48,6 +48,10 @@ class HexMapEditor {
         const terrainSelect = document.getElementById('terrain-select');
         const brushSizeSlider = document.getElementById('brush-size');
         const brushSizeValue = document.getElementById('brush-size-value');
+        const newBtn = document.getElementById('new-btn');
+        const openBtn = document.getElementById('open-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const saveAsBtn = document.getElementById('save-as-btn');
         
         terrainSelect.addEventListener('change', (e) => {
             this.selectedTerrain = e.target.value;
@@ -56,6 +60,22 @@ class HexMapEditor {
         brushSizeSlider.addEventListener('input', (e) => {
             this.brushSize = parseInt(e.target.value);
             brushSizeValue.textContent = this.brushSize;
+        });
+        
+        newBtn.addEventListener('click', () => {
+            this.newMap();
+        });
+        
+        openBtn.addEventListener('click', () => {
+            this.openMap();
+        });
+        
+        saveBtn.addEventListener('click', () => {
+            this.save();
+        });
+        
+        saveAsBtn.addEventListener('click', () => {
+            this.saveAs();
         });
         
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
@@ -301,6 +321,42 @@ class HexMapEditor {
         
         document.getElementById('map-info').textContent = `Map: ${this.mapWidth}x${this.mapHeight}`;
         this.render();
+    }
+    
+    newMap() {
+        this.generateInitialMap();
+        this.render();
+    }
+    
+    openMap() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.hexmap';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                try {
+                    const text = await file.text();
+                    const mapData = JSON.parse(text);
+                    this.loadMap(mapData, null);
+                } catch (error) {
+                    alert('Error loading map file: ' + error.message);
+                }
+            }
+        };
+        input.click();
+    }
+    
+    save() {
+        if (this.currentFilePath) {
+            this.saveMapDirect(this.currentFilePath);
+        } else {
+            this.saveAs();
+        }
+    }
+    
+    saveAs() {
+        this.saveAsMap();
     }
 }
 
