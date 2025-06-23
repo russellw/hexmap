@@ -47,7 +47,6 @@ class HexMapEditor {
         const terrainSelect = document.getElementById('terrain-select');
         const brushSizeSlider = document.getElementById('brush-size');
         const brushSizeValue = document.getElementById('brush-size-value');
-        const clearMapBtn = document.getElementById('clear-map');
         
         terrainSelect.addEventListener('change', (e) => {
             this.selectedTerrain = e.target.value;
@@ -56,10 +55,6 @@ class HexMapEditor {
         brushSizeSlider.addEventListener('input', (e) => {
             this.brushSize = parseInt(e.target.value);
             brushSizeValue.textContent = this.brushSize;
-        });
-        
-        clearMapBtn.addEventListener('click', () => {
-            this.clearMap();
         });
         
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
