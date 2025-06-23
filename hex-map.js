@@ -17,9 +17,9 @@ class HexMapEditor {
             grass: '#4a7c59',
             water: '#1e5f8b',
             mountain: '#8b5a2b',
-            forest: '#2d5016',
+            forest: '#228b22',
             desert: '#deb887',
-            jungle: '#1a4d1a',
+            jungle: '#0d3d0d',
             tundra: '#b8c6db'
         };
         
