@@ -11,6 +11,7 @@ class HexMapEditor {
         this.selectedTerrain = 'unknown';
         this.brushSize = 1;
         this.hoveredHex = null;
+        this.currentFilePath = null;
         
         this.terrainColors = {
             unknown: '#333333',
@@ -71,17 +72,22 @@ class HexMapEditor {
             this.render();
         });
         
-        ipcRenderer.on('load-map', (event, mapData) => {
-            this.loadMap(mapData);
+        ipcRenderer.on('load-map', (event, mapData, filePath) => {
+            this.loadMap(mapData, filePath);
         });
         
-        ipcRenderer.on('save-map', () => {
-            this.saveMap();
+        ipcRenderer.on('save-map', (event, filePath) => {
+            this.saveMapDirect(filePath);
+        });
+        
+        ipcRenderer.on('save-as-map', () => {
+            this.saveAsMap();
         });
     }
     
     generateInitialMap() {
         this.hexMap.clear();
+        this.currentFilePath = null;
         for (let q = 0; q < this.mapWidth; q++) {
             for (let r = 0; r < this.mapHeight; r++) {
                 const key = `${q},${r}`;
@@ -258,20 +264,35 @@ class HexMapEditor {
         this.render();
     }
     
-    saveMap() {
+    saveMapDirect(filePath) {
         const mapData = {
             width: this.mapWidth,
             height: this.mapHeight,
             hexes: Array.from(this.hexMap.values())
         };
         
-        ipcRenderer.invoke('save-map-dialog', mapData);
+        ipcRenderer.invoke('save-map-direct', mapData, filePath);
     }
     
-    loadMap(mapData) {
+    saveAsMap() {
+        const mapData = {
+            width: this.mapWidth,
+            height: this.mapHeight,
+            hexes: Array.from(this.hexMap.values())
+        };
+        
+        ipcRenderer.invoke('save-map-dialog', mapData).then(result => {
+            if (result.success) {
+                this.currentFilePath = result.filePath;
+            }
+        });
+    }
+    
+    loadMap(mapData, filePath = null) {
         this.mapWidth = mapData.width;
         this.mapHeight = mapData.height;
         this.hexMap.clear();
+        this.currentFilePath = filePath;
         
         for (let hex of mapData.hexes) {
             const key = `${hex.q},${hex.r}`;

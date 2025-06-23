@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 let mainWindow;
+let currentFilePath = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -15,6 +16,7 @@ function createWindow() {
   });
 
   mainWindow.loadFile('index.html');
+  updateWindowTitle();
 
   const template = [
     {
@@ -24,6 +26,8 @@ function createWindow() {
           label: 'New Map',
           accelerator: 'CmdOrCtrl+N',
           click: () => {
+            currentFilePath = null;
+            updateWindowTitle();
             mainWindow.webContents.send('new-map');
           }
         },
@@ -42,15 +46,28 @@ function createWindow() {
             if (!result.canceled) {
               const filePath = result.filePaths[0];
               const data = fs.readFileSync(filePath, 'utf8');
-              mainWindow.webContents.send('load-map', JSON.parse(data));
+              currentFilePath = filePath;
+              updateWindowTitle();
+              mainWindow.webContents.send('load-map', JSON.parse(data), filePath);
             }
           }
         },
         {
-          label: 'Save Map',
+          label: 'Save',
           accelerator: 'CmdOrCtrl+S',
           click: async () => {
-            mainWindow.webContents.send('save-map');
+            if (currentFilePath) {
+              mainWindow.webContents.send('save-map', currentFilePath);
+            } else {
+              mainWindow.webContents.send('save-as-map');
+            }
+          }
+        },
+        {
+          label: 'Save As...',
+          accelerator: 'CmdOrCtrl+Shift+S',
+          click: async () => {
+            mainWindow.webContents.send('save-as-map');
           }
         },
         { type: 'separator' },
@@ -73,6 +90,11 @@ function createWindow() {
   }
 }
 
+function updateWindowTitle() {
+  const filename = currentFilePath ? path.basename(currentFilePath) : 'Untitled';
+  mainWindow.setTitle(`Hexmap - ${filename}`);
+}
+
 ipcMain.handle('save-map-dialog', async (event, mapData) => {
   const result = await dialog.showSaveDialog(mainWindow, {
     filters: [
@@ -83,9 +105,20 @@ ipcMain.handle('save-map-dialog', async (event, mapData) => {
   
   if (!result.canceled) {
     fs.writeFileSync(result.filePath, JSON.stringify(mapData, null, 2));
-    return { success: true };
+    currentFilePath = result.filePath;
+    updateWindowTitle();
+    return { success: true, filePath: result.filePath };
   }
   return { success: false };
+});
+
+ipcMain.handle('save-map-direct', async (event, mapData, filePath) => {
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(mapData, null, 2));
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
 });
 
 app.whenReady().then(createWindow);
