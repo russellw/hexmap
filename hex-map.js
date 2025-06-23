@@ -107,6 +107,7 @@ class HexMapEditor {
         
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         this.canvas.addEventListener('click', (e) => this.handleClick(e));
+        this.canvas.addEventListener('dblclick', (e) => this.handleDoubleClick(e));
         this.canvas.addEventListener('wheel', (e) => this.handleWheel(e));
         this.canvas.addEventListener('mouseleave', () => {
             this.hoveredHex = null;
@@ -142,7 +143,8 @@ class HexMapEditor {
                 this.hexMap.set(key, {
                     q: q,
                     r: r,
-                    terrain: 'unknown'
+                    terrain: 'unknown',
+                    name: ''
                 });
             }
         }
@@ -230,6 +232,20 @@ class HexMapEditor {
             }
             
             this.drawHex(pixel.x, pixel.y, this.hexSize, color, strokeColor, lineWidth);
+            
+            // Draw hex name if it exists
+            if (hex.name && this.hexSize > 15) {
+                this.ctx.save();
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.strokeStyle = '#000000';
+                this.ctx.lineWidth = 2;
+                this.ctx.font = `${Math.max(8, this.hexSize * 0.3)}px Arial`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.strokeText(hex.name, pixel.x, pixel.y);
+                this.ctx.fillText(hex.name, pixel.x, pixel.y);
+                this.ctx.restore();
+            }
         }
         
         if (this.hoveredHex) {
@@ -288,10 +304,12 @@ class HexMapEditor {
         
         if (this.hexMap.has(`${hex.q},${hex.r}`)) {
             this.hoveredHex = hex;
-            document.getElementById('hex-info').textContent = `Hex: (${hex.q}, ${hex.r})`;
+            const hexData = this.hexMap.get(`${hex.q},${hex.r}`);
+            const nameText = hexData.name ? ` - ${hexData.name}` : '';
+            document.getElementById('hex-info').textContent = `Hex: (${hex.q}, ${hex.r})${nameText}`;
         } else {
             this.hoveredHex = null;
-            document.getElementById('hex-info').textContent = 'Hover over hexes to see coordinates';
+            document.getElementById('hex-info').textContent = 'Hover over hexes to see coordinates | Double-click to name';
         }
         
         this.render();
@@ -310,6 +328,21 @@ class HexMapEditor {
         }
         
         this.render();
+    }
+    
+    handleDoubleClick(e) {
+        if (!this.hoveredHex) return;
+        
+        const hex = this.hexMap.get(`${this.hoveredHex.q},${this.hoveredHex.r}`);
+        if (!hex) return;
+        
+        const currentName = hex.name || '';
+        const newName = prompt('Enter hex name (leave empty to remove):', currentName);
+        
+        if (newName !== null) {
+            hex.name = newName.trim();
+            this.render();
+        }
     }
     
     handleWheel(e) {
@@ -418,7 +451,8 @@ class HexMapEditor {
                 this.hexMap.set(key, {
                     q: q,
                     r: r,
-                    terrain: existingHex ? existingHex.terrain : 'unknown'
+                    terrain: existingHex ? existingHex.terrain : 'unknown',
+                    name: existingHex ? existingHex.name || '' : ''
                 });
             }
         }
