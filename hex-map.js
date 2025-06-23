@@ -48,6 +48,9 @@ class HexMapEditor {
         const terrainSelect = document.getElementById('terrain-select');
         const brushSizeSlider = document.getElementById('brush-size');
         const brushSizeValue = document.getElementById('brush-size-value');
+        const mapWidthInput = document.getElementById('map-width');
+        const mapHeightInput = document.getElementById('map-height');
+        const resizeMapBtn = document.getElementById('resize-map');
         const newBtn = document.getElementById('new-btn');
         const openBtn = document.getElementById('open-btn');
         const saveBtn = document.getElementById('save-btn');
@@ -60,6 +63,12 @@ class HexMapEditor {
         brushSizeSlider.addEventListener('input', (e) => {
             this.brushSize = parseInt(e.target.value);
             brushSizeValue.textContent = this.brushSize;
+        });
+        
+        resizeMapBtn.addEventListener('click', () => {
+            const newWidth = parseInt(mapWidthInput.value);
+            const newHeight = parseInt(mapHeightInput.value);
+            this.resizeMap(newWidth, newHeight);
         });
         
         newBtn.addEventListener('click', () => {
@@ -317,6 +326,35 @@ class HexMapEditor {
         for (let hex of mapData.hexes) {
             const key = `${hex.q},${hex.r}`;
             this.hexMap.set(key, hex);
+        }
+        
+        document.getElementById('map-info').textContent = `Map: ${this.mapWidth}x${this.mapHeight}`;
+        document.getElementById('map-width').value = this.mapWidth;
+        document.getElementById('map-height').value = this.mapHeight;
+        this.render();
+    }
+    
+    resizeMap(newWidth, newHeight) {
+        if (newWidth < 5 || newWidth > 50 || newHeight < 5 || newHeight > 50) {
+            alert('Map size must be between 5x5 and 50x50');
+            return;
+        }
+        
+        const oldMap = new Map(this.hexMap);
+        this.mapWidth = newWidth;
+        this.mapHeight = newHeight;
+        this.hexMap.clear();
+        
+        for (let q = 0; q < this.mapWidth; q++) {
+            for (let r = 0; r < this.mapHeight; r++) {
+                const key = `${q},${r}`;
+                const existingHex = oldMap.get(key);
+                this.hexMap.set(key, {
+                    q: q,
+                    r: r,
+                    terrain: existingHex ? existingHex.terrain : 'unknown'
+                });
+            }
         }
         
         document.getElementById('map-info').textContent = `Map: ${this.mapWidth}x${this.mapHeight}`;

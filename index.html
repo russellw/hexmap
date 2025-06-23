@@ -10,10 +10,10 @@
     <div id="app">
         <div id="toolbar">
             <div class="toolbar-section">
-                <button id="new-btn" title="New Map (Ctrl+N)">New</button>
-                <button id="open-btn" title="Open Map (Ctrl+O)">Open</button>
-                <button id="save-btn" title="Save (Ctrl+S)">Save</button>
-                <button id="save-as-btn" title="Save As (Ctrl+Shift+S)">Save As</button>
+                <button id="new-btn" title="New Map (Ctrl+N)">📄 New</button>
+                <button id="open-btn" title="Open Map (Ctrl+O)">📁 Open</button>
+                <button id="save-btn" title="Save (Ctrl+S)">💾 Save</button>
+                <button id="save-as-btn" title="Save As (Ctrl+Shift+S)">💾 Save As</button>
             </div>
             <div class="toolbar-section">
                 <label>Terrain:</label>
@@ -28,6 +28,13 @@
                     <option value="tundra">Tundra</option>
                     <option value="mountain">Mountain</option>
                 </select>
+            </div>
+            <div class="toolbar-section">
+                <label>Map Size:</label>
+                <input type="number" id="map-width" min="5" max="50" value="20" style="width: 60px;">
+                <span>×</span>
+                <input type="number" id="map-height" min="5" max="50" value="20" style="width: 60px;">
+                <button id="resize-map">Resize</button>
             </div>
             <div class="toolbar-section">
                 <label>Brush Size:</label>
