@@ -16,6 +16,7 @@ function createWindow() {
   });
 
   mainWindow.loadFile('index.html');
+  mainWindow.maximize();
   updateWindowTitle();
 
   const template = [
