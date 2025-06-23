@@ -7,6 +7,8 @@ class HexMapEditor {
         this.mapWidth = 20;
         this.mapHeight = 20;
         this.hexSize = 20;
+        this.baseHexSize = 20;
+        this.zoomLevel = 1;
         this.hexMap = new Map();
         this.selectedTerrain = 'unknown';
         this.brushSize = 1;
@@ -29,6 +31,7 @@ class HexMapEditor {
         this.initEventListeners();
         this.initElectronListeners();
         this.generateInitialMap();
+        this.updateZoomDisplay();
         this.render();
     }
     
@@ -55,6 +58,9 @@ class HexMapEditor {
         const openBtn = document.getElementById('open-btn');
         const saveBtn = document.getElementById('save-btn');
         const saveAsBtn = document.getElementById('save-as-btn');
+        const zoomInBtn = document.getElementById('zoom-in');
+        const zoomOutBtn = document.getElementById('zoom-out');
+        const zoomResetBtn = document.getElementById('zoom-reset');
         
         terrainSelect.addEventListener('change', (e) => {
             this.selectedTerrain = e.target.value;
@@ -87,8 +93,21 @@ class HexMapEditor {
             this.saveAs();
         });
         
+        zoomInBtn.addEventListener('click', () => {
+            this.zoom(0.1);
+        });
+        
+        zoomOutBtn.addEventListener('click', () => {
+            this.zoom(-0.1);
+        });
+        
+        zoomResetBtn.addEventListener('click', () => {
+            this.resetZoom();
+        });
+        
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         this.canvas.addEventListener('click', (e) => this.handleClick(e));
+        this.canvas.addEventListener('wheel', (e) => this.handleWheel(e));
         this.canvas.addEventListener('mouseleave', () => {
             this.hoveredHex = null;
             this.render();
@@ -291,6 +310,47 @@ class HexMapEditor {
         }
         
         this.render();
+    }
+    
+    handleWheel(e) {
+        e.preventDefault();
+        
+        const zoomFactor = 0.1;
+        const minZoom = 0.3;
+        const maxZoom = 3.0;
+        
+        if (e.deltaY < 0) {
+            // Zoom in
+            this.zoomLevel = Math.min(maxZoom, this.zoomLevel + zoomFactor);
+        } else {
+            // Zoom out
+            this.zoomLevel = Math.max(minZoom, this.zoomLevel - zoomFactor);
+        }
+        
+        this.hexSize = this.baseHexSize * this.zoomLevel;
+        this.updateZoomDisplay();
+        this.render();
+    }
+    
+    zoom(delta) {
+        const minZoom = 0.3;
+        const maxZoom = 3.0;
+        
+        this.zoomLevel = Math.max(minZoom, Math.min(maxZoom, this.zoomLevel + delta));
+        this.hexSize = this.baseHexSize * this.zoomLevel;
+        this.updateZoomDisplay();
+        this.render();
+    }
+    
+    resetZoom() {
+        this.zoomLevel = 1.0;
+        this.hexSize = this.baseHexSize;
+        this.updateZoomDisplay();
+        this.render();
+    }
+    
+    updateZoomDisplay() {
+        document.getElementById('zoom-level').textContent = Math.round(this.zoomLevel * 100) + '%';
     }
     
     saveMapDirect(filePath) {
