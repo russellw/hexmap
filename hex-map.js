@@ -18,7 +18,9 @@ class HexMapEditor {
             water: '#1e5f8b',
             mountain: '#8b5a2b',
             forest: '#2d5016',
-            desert: '#deb887'
+            desert: '#deb887',
+            jungle: '#1a4d1a',
+            tundra: '#b8c6db'
         };
         
         this.initCanvas();
