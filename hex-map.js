@@ -15,7 +15,8 @@ class HexMapEditor {
         this.terrainColors = {
             unknown: '#333333',
             grass: '#7cb342',
-            water: '#1e5f8b',
+            sea: '#1e4d72',
+            lake: '#4a90e2',
             mountain: '#8b5a2b',
             forest: '#228b22',
             desert: '#deb887',
