@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hex Map Editor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <div id="toolbar">
+            <div class="toolbar-section">
+                <label>Terrain:</label>
+                <select id="terrain-select">
+                    <option value="grass">Grass</option>
+                    <option value="water">Water</option>
+                    <option value="mountain">Mountain</option>
+                    <option value="forest">Forest</option>
+                    <option value="desert">Desert</option>
+                </select>
+            </div>
+            <div class="toolbar-section">
+                <label>Brush Size:</label>
+                <input type="range" id="brush-size" min="1" max="5" value="1">
+                <span id="brush-size-value">1</span>
+            </div>
+            <div class="toolbar-section">
+                <button id="clear-map">Clear Map</button>
+            </div>
+        </div>
+        
+        <div id="canvas-container">
+            <canvas id="hex-canvas"></canvas>
+        </div>
+        
+        <div id="status-bar">
+            <span id="hex-info">Hover over hexes to see coordinates</span>
+            <span id="map-info">Map: 20x20</span>
+        </div>
+    </div>
+    
+    <script src="hex-map.js"></script>
+</body>
+</html>
