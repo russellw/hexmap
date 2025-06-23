@@ -121,6 +121,11 @@ ipcMain.handle('save-map-direct', async (event, mapData, filePath) => {
   }
 });
 
+ipcMain.on('update-title', (event, filePath) => {
+  currentFilePath = filePath;
+  updateWindowTitle();
+});
+
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {

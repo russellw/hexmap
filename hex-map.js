@@ -331,6 +331,12 @@ class HexMapEditor {
         document.getElementById('map-info').textContent = `Map: ${this.mapWidth}x${this.mapHeight}`;
         document.getElementById('map-width').value = this.mapWidth;
         document.getElementById('map-height').value = this.mapHeight;
+        
+        // Update main process title bar
+        if (typeof ipcRenderer !== 'undefined') {
+            ipcRenderer.send('update-title', filePath);
+        }
+        
         this.render();
     }
     
@@ -376,7 +382,7 @@ class HexMapEditor {
                 try {
                     const text = await file.text();
                     const mapData = JSON.parse(text);
-                    this.loadMap(mapData, null);
+                    this.loadMap(mapData, file.name);
                 } catch (error) {
                     alert('Error loading map file: ' + error.message);
                 }
