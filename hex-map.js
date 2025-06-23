@@ -8,11 +8,12 @@ class HexMapEditor {
         this.mapHeight = 20;
         this.hexSize = 20;
         this.hexMap = new Map();
-        this.selectedTerrain = 'grass';
+        this.selectedTerrain = 'unknown';
         this.brushSize = 1;
         this.hoveredHex = null;
         
         this.terrainColors = {
+            unknown: '#333333',
             grass: '#4a7c59',
             water: '#1e5f8b',
             mountain: '#8b5a2b',
@@ -89,7 +90,7 @@ class HexMapEditor {
                 this.hexMap.set(key, {
                     q: q,
                     r: r,
-                    terrain: 'grass'
+                    terrain: 'unknown'
                 });
             }
         }
@@ -97,7 +98,7 @@ class HexMapEditor {
     
     clearMap() {
         for (let [key, hex] of this.hexMap) {
-            hex.terrain = 'grass';
+            hex.terrain = 'unknown';
         }
         this.render();
     }
