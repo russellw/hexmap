@@ -1,5 +1,5 @@
 {
-  "name": "hex-map-editor",
+  "name": "hexmap",
   "version": "1.0.0",
   "description": "A hex map editor built with Electron",
   "main": "main.js",
