@@ -16,9 +16,13 @@
                 <button id="save-as-btn" title="Save As (Ctrl+Shift+S)">💾 Save As</button>
             </div>
             <div class="toolbar-section">
+                <label>Selected Hex:</label>
+                <span id="selected-hex-info">None</span>
+            </div>
+            <div class="toolbar-section">
                 <label>Terrain:</label>
-                <select id="terrain-select">
-                    <option value="unknown" selected>Unknown</option>
+                <select id="terrain-select" disabled>
+                    <option value="unknown">Unknown</option>
                     <option value="sea">Sea</option>
                     <option value="lake">Lake</option>
                     <option value="grass">Grass</option>
@@ -30,9 +34,9 @@
                 </select>
             </div>
             <div class="toolbar-section">
-                <label>Brush Size:</label>
-                <input type="range" id="brush-size" min="1" max="5" value="1">
-                <span id="brush-size-value">1</span>
+                <label>Name:</label>
+                <input type="text" id="hex-name-input" placeholder="Hex name" disabled style="width: 120px;">
+                <button id="apply-name" disabled>Apply</button>
             </div>
             <div class="toolbar-section">
                 <label>Zoom:</label>
@@ -48,7 +52,7 @@
         </div>
         
         <div id="status-bar">
-            <span id="hex-info">Hover over hexes to see coordinates | Double-click to name | Right-drag to pan</span>
+            <span id="hex-info">Click to select hex | Right-drag to pan</span>
             <span id="map-info">Map: 20x20</span>
         </div>
     </div>

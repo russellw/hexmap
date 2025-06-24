@@ -15,9 +15,8 @@ class HexMapEditor {
         this.lastMouseX = 0;
         this.lastMouseY = 0;
         this.hexMap = new Map();
-        this.selectedTerrain = 'unknown';
-        this.brushSize = 1;
         this.hoveredHex = null;
+        this.selectedHex = null;
         this.currentFilePath = null;
         
         this.terrainColors = {
@@ -54,8 +53,8 @@ class HexMapEditor {
     
     initEventListeners() {
         const terrainSelect = document.getElementById('terrain-select');
-        const brushSizeSlider = document.getElementById('brush-size');
-        const brushSizeValue = document.getElementById('brush-size-value');
+        const hexNameInput = document.getElementById('hex-name-input');
+        const applyNameBtn = document.getElementById('apply-name');
         const newBtn = document.getElementById('new-btn');
         const openBtn = document.getElementById('open-btn');
         const saveBtn = document.getElementById('save-btn');
@@ -65,12 +64,30 @@ class HexMapEditor {
         const zoomResetBtn = document.getElementById('zoom-reset');
         
         terrainSelect.addEventListener('change', (e) => {
-            this.selectedTerrain = e.target.value;
+            if (this.selectedHex) {
+                const hexData = this.hexMap.get(`${this.selectedHex.q},${this.selectedHex.r}`);
+                if (hexData) {
+                    hexData.terrain = e.target.value;
+                    this.render();
+                }
+            }
         });
         
-        brushSizeSlider.addEventListener('input', (e) => {
-            this.brushSize = parseInt(e.target.value);
-            brushSizeValue.textContent = this.brushSize;
+        applyNameBtn.addEventListener('click', () => {
+            if (this.selectedHex) {
+                const hexData = this.hexMap.get(`${this.selectedHex.q},${this.selectedHex.r}`);
+                if (hexData) {
+                    hexData.name = hexNameInput.value.trim();
+                    this.updateSelectedHexInfo();
+                    this.render();
+                }
+            }
+        });
+        
+        hexNameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                applyNameBtn.click();
+            }
         });
         
         
@@ -150,6 +167,8 @@ class HexMapEditor {
     generateInitialMap() {
         this.hexMap.clear();
         this.currentFilePath = null;
+        this.selectedHex = null;
+        this.updateSelectedHexInfo();
         for (let q = 0; q < this.mapWidth; q++) {
             for (let r = 0; r < this.mapHeight; r++) {
                 const key = `${q},${r}`;
@@ -241,7 +260,10 @@ class HexMapEditor {
             let strokeColor = '#666';
             let lineWidth = 1;
             
-            if (this.hoveredHex && this.hoveredHex.q === hex.q && this.hoveredHex.r === hex.r) {
+            if (this.selectedHex && this.selectedHex.q === hex.q && this.selectedHex.r === hex.r) {
+                strokeColor = '#ff0000';
+                lineWidth = 3;
+            } else if (this.hoveredHex && this.hoveredHex.q === hex.q && this.hoveredHex.r === hex.r) {
                 strokeColor = '#ffffff';
                 lineWidth = 2;
             }
@@ -262,53 +284,8 @@ class HexMapEditor {
                 this.ctx.restore();
             }
         }
-        
-        if (this.hoveredHex) {
-            this.drawBrushPreview();
-        }
     }
     
-    drawBrushPreview() {
-        if (!this.hoveredHex) return;
-        
-        const affected = this.getHexesInRadius(this.hoveredHex.q, this.hoveredHex.r, this.brushSize - 1);
-        
-        for (let hex of affected) {
-            if (this.hexMap.has(`${hex.q},${hex.r}`)) {
-                const pixel = this.hexToPixel(hex.q, hex.r);
-                this.ctx.save();
-                this.ctx.strokeStyle = '#ffff00';
-                this.ctx.lineWidth = 2;
-                this.ctx.setLineDash([5, 5]);
-                this.ctx.beginPath();
-                for (let i = 0; i < 6; i++) {
-                    const angle = i * Math.PI / 3;
-                    const x = pixel.x + this.hexSize * Math.cos(angle);
-                    const y = pixel.y + this.hexSize * Math.sin(angle);
-                    if (i === 0) {
-                        this.ctx.moveTo(x, y);
-                    } else {
-                        this.ctx.lineTo(x, y);
-                    }
-                }
-                this.ctx.closePath();
-                this.ctx.stroke();
-                this.ctx.restore();
-            }
-        }
-    }
-    
-    getHexesInRadius(centerQ, centerR, radius) {
-        const results = [];
-        for (let q = -radius; q <= radius; q++) {
-            const r1 = Math.max(-radius, -q - radius);
-            const r2 = Math.min(radius, -q + radius);
-            for (let r = r1; r <= r2; r++) {
-                results.push({ q: centerQ + q, r: centerR + r });
-            }
-        }
-        return results;
-    }
     
     handleMouseDown(e) {
         if (e.button === 2) { // Right mouse button
@@ -352,25 +329,26 @@ class HexMapEditor {
             document.getElementById('hex-info').textContent = `Hex: (${hex.q}, ${hex.r})${nameText}`;
         } else {
             this.hoveredHex = null;
-            document.getElementById('hex-info').textContent = 'Hover over hexes to see coordinates | Double-click to name | Right-drag to pan';
+            document.getElementById('hex-info').textContent = 'Click to select hex | Right-drag to pan';
         }
         
         this.render();
     }
     
     handleClick(e) {
-        if (!this.hoveredHex) return;
+        if (this.isDragging) return;
         
-        const affected = this.getHexesInRadius(this.hoveredHex.q, this.hoveredHex.r, this.brushSize - 1);
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
         
-        for (let hex of affected) {
-            const key = `${hex.q},${hex.r}`;
-            if (this.hexMap.has(key)) {
-                this.hexMap.get(key).terrain = this.selectedTerrain;
-            }
+        const hex = this.pixelToHex(x, y);
+        
+        if (this.hexMap.has(`${hex.q},${hex.r}`)) {
+            this.selectedHex = hex;
+            this.updateSelectedHexInfo();
+            this.render();
         }
-        
-        this.render();
     }
     
     handleDoubleClick(e) {
@@ -392,6 +370,31 @@ class HexMapEditor {
                 hexData.name = newName.trim();
                 this.render();
             }
+        }
+    }
+    
+    updateSelectedHexInfo() {
+        const selectedHexInfo = document.getElementById('selected-hex-info');
+        const terrainSelect = document.getElementById('terrain-select');
+        const hexNameInput = document.getElementById('hex-name-input');
+        const applyNameBtn = document.getElementById('apply-name');
+        
+        if (this.selectedHex) {
+            const hexData = this.hexMap.get(`${this.selectedHex.q},${this.selectedHex.r}`);
+            if (hexData) {
+                selectedHexInfo.textContent = `(${this.selectedHex.q}, ${this.selectedHex.r})`;
+                terrainSelect.value = hexData.terrain;
+                terrainSelect.disabled = false;
+                hexNameInput.value = hexData.name || '';
+                hexNameInput.disabled = false;
+                applyNameBtn.disabled = false;
+            }
+        } else {
+            selectedHexInfo.textContent = 'None';
+            terrainSelect.disabled = true;
+            hexNameInput.value = '';
+            hexNameInput.disabled = true;
+            applyNameBtn.disabled = true;
         }
     }
     
