@@ -548,8 +548,8 @@ class HexMapEditor {
     }
     
     resizeMap(newWidth, newHeight) {
-        if (newWidth < 5 || newWidth > 50 || newHeight < 5 || newHeight > 50) {
-            alert('Map size must be between 5x5 and 50x50');
+        if (newWidth < 5 || newWidth > 200 || newHeight < 5 || newHeight > 200) {
+            alert('Map size must be between 5x5 and 200x200');
             return;
         }
         
@@ -641,12 +641,12 @@ class HexMapEditor {
         dialog.innerHTML = `
             <h3 style="margin-top: 0;">Resize Map</h3>
             <div style="margin: 15px 0;">
-                <label>Width (5-50): </label>
-                <input type="number" id="dialog-width" min="5" max="50" value="${this.mapWidth}" style="width: 80px; margin-left: 10px;">
+                <label>Width (5-200): </label>
+                <input type="number" id="dialog-width" min="5" max="200" value="${this.mapWidth}" style="width: 80px; margin-left: 10px;">
             </div>
             <div style="margin: 15px 0;">
-                <label>Height (5-50): </label>
-                <input type="number" id="dialog-height" min="5" max="50" value="${this.mapHeight}" style="width: 80px; margin-left: 10px;">
+                <label>Height (5-200): </label>
+                <input type="number" id="dialog-height" min="5" max="200" value="${this.mapHeight}" style="width: 80px; margin-left: 10px;">
             </div>
             <div style="margin-top: 20px; text-align: right;">
                 <button id="dialog-cancel" style="margin-right: 10px;">Cancel</button>
@@ -671,13 +671,13 @@ class HexMapEditor {
             const width = parseInt(dialog.querySelector('#dialog-width').value);
             const height = parseInt(dialog.querySelector('#dialog-height').value);
             
-            if (isNaN(width) || width < 5 || width > 50) {
-                alert('Width must be between 5 and 50');
+            if (isNaN(width) || width < 5 || width > 200) {
+                alert('Width must be between 5 and 200');
                 return;
             }
             
-            if (isNaN(height) || height < 5 || height > 50) {
-                alert('Height must be between 5 and 50');
+            if (isNaN(height) || height < 5 || height > 200) {
+                alert('Height must be between 5 and 200');
                 return;
             }
             
