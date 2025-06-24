@@ -331,17 +331,24 @@ class HexMapEditor {
     }
     
     handleDoubleClick(e) {
-        if (!this.hoveredHex) return;
+        e.preventDefault();
+        e.stopPropagation();
         
-        const hex = this.hexMap.get(`${this.hoveredHex.q},${this.hoveredHex.r}`);
-        if (!hex) return;
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
         
-        const currentName = hex.name || '';
-        const newName = prompt('Enter hex name (leave empty to remove):', currentName);
+        const hex = this.pixelToHex(x, y);
         
-        if (newName !== null) {
-            hex.name = newName.trim();
-            this.render();
+        if (this.hexMap.has(`${hex.q},${hex.r}`)) {
+            const hexData = this.hexMap.get(`${hex.q},${hex.r}`);
+            const currentName = hexData.name || '';
+            const newName = prompt('Enter hex name (leave empty to remove):', currentName);
+            
+            if (newName !== null) {
+                hexData.name = newName.trim();
+                this.render();
+            }
         }
     }
     
