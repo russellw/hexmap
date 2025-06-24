@@ -51,9 +51,6 @@ class HexMapEditor {
         const terrainSelect = document.getElementById('terrain-select');
         const brushSizeSlider = document.getElementById('brush-size');
         const brushSizeValue = document.getElementById('brush-size-value');
-        const mapWidthInput = document.getElementById('map-width');
-        const mapHeightInput = document.getElementById('map-height');
-        const resizeMapBtn = document.getElementById('resize-map');
         const newBtn = document.getElementById('new-btn');
         const openBtn = document.getElementById('open-btn');
         const saveBtn = document.getElementById('save-btn');
@@ -71,11 +68,6 @@ class HexMapEditor {
             brushSizeValue.textContent = this.brushSize;
         });
         
-        resizeMapBtn.addEventListener('click', () => {
-            const newWidth = parseInt(mapWidthInput.value);
-            const newHeight = parseInt(mapHeightInput.value);
-            this.resizeMap(newWidth, newHeight);
-        });
         
         newBtn.addEventListener('click', () => {
             this.newMap();
@@ -105,6 +97,7 @@ class HexMapEditor {
             this.resetZoom();
         });
         
+        
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         this.canvas.addEventListener('click', (e) => this.handleClick(e));
         this.canvas.addEventListener('dblclick', (e) => this.handleDoubleClick(e));
@@ -113,25 +106,32 @@ class HexMapEditor {
             this.hoveredHex = null;
             this.render();
         });
+        
     }
     
     initElectronListeners() {
-        ipcRenderer.on('new-map', () => {
-            this.generateInitialMap();
-            this.render();
-        });
-        
-        ipcRenderer.on('load-map', (event, mapData, filePath) => {
-            this.loadMap(mapData, filePath);
-        });
-        
-        ipcRenderer.on('save-map', (event, filePath) => {
-            this.saveMapDirect(filePath);
-        });
-        
-        ipcRenderer.on('save-as-map', () => {
-            this.saveAsMap();
-        });
+        if (typeof ipcRenderer !== 'undefined') {
+            ipcRenderer.on('new-map', () => {
+                this.generateInitialMap();
+                this.render();
+            });
+            
+            ipcRenderer.on('load-map', (event, mapData, filePath) => {
+                this.loadMap(mapData, filePath);
+            });
+            
+            ipcRenderer.on('save-map', (event, filePath) => {
+                this.saveMapDirect(filePath);
+            });
+            
+            ipcRenderer.on('save-as-map', () => {
+                this.saveAsMap();
+            });
+            
+            ipcRenderer.on('show-resize-dialog', () => {
+                this.showResizeDialog();
+            });
+        }
     }
     
     generateInitialMap() {
@@ -429,8 +429,6 @@ class HexMapEditor {
         }
         
         document.getElementById('map-info').textContent = `Map: ${this.mapWidth}x${this.mapHeight}`;
-        document.getElementById('map-width').value = this.mapWidth;
-        document.getElementById('map-height').value = this.mapHeight;
         
         // Update main process title bar
         if (typeof ipcRenderer !== 'undefined') {
@@ -502,6 +500,91 @@ class HexMapEditor {
     
     saveAs() {
         this.saveAsMap();
+    }
+    
+    showResizeDialog() {
+        console.log('showResizeDialog called');
+        
+        // Create modal dialog
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        `;
+        
+        const dialog = document.createElement('div');
+        dialog.style.cssText = `
+            background: #3c3c3c;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #666;
+            min-width: 300px;
+        `;
+        
+        dialog.innerHTML = `
+            <h3 style="margin-top: 0;">Resize Map</h3>
+            <div style="margin: 15px 0;">
+                <label>Width (5-50): </label>
+                <input type="number" id="dialog-width" min="5" max="50" value="${this.mapWidth}" style="width: 80px; margin-left: 10px;">
+            </div>
+            <div style="margin: 15px 0;">
+                <label>Height (5-50): </label>
+                <input type="number" id="dialog-height" min="5" max="50" value="${this.mapHeight}" style="width: 80px; margin-left: 10px;">
+            </div>
+            <div style="margin-top: 20px; text-align: right;">
+                <button id="dialog-cancel" style="margin-right: 10px;">Cancel</button>
+                <button id="dialog-ok">OK</button>
+            </div>
+        `;
+        
+        modal.appendChild(dialog);
+        document.body.appendChild(modal);
+        
+        // Focus the width input
+        const widthInput = dialog.querySelector('#dialog-width');
+        widthInput.focus();
+        widthInput.select();
+        
+        // Handle buttons
+        dialog.querySelector('#dialog-cancel').onclick = () => {
+            document.body.removeChild(modal);
+        };
+        
+        dialog.querySelector('#dialog-ok').onclick = () => {
+            const width = parseInt(dialog.querySelector('#dialog-width').value);
+            const height = parseInt(dialog.querySelector('#dialog-height').value);
+            
+            if (isNaN(width) || width < 5 || width > 50) {
+                alert('Width must be between 5 and 50');
+                return;
+            }
+            
+            if (isNaN(height) || height < 5 || height > 50) {
+                alert('Height must be between 5 and 50');
+                return;
+            }
+            
+            document.body.removeChild(modal);
+            this.resizeMap(width, height);
+        };
+        
+        // Handle Enter key
+        dialog.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                dialog.querySelector('#dialog-ok').click();
+            } else if (e.key === 'Escape') {
+                dialog.querySelector('#dialog-cancel').click();
+            }
+        });
     }
 }
 
