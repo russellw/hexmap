@@ -73,17 +73,21 @@ function createWindow() {
         },
         { type: 'separator' },
         {
-          label: 'Resize Map...',
-          click: () => {
-            mainWindow.webContents.send('show-resize-dialog');
-          }
-        },
-        { type: 'separator' },
-        {
           label: 'Exit',
           accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
           click: () => {
             app.quit();
+          }
+        }
+      ]
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        {
+          label: 'Resize Map...',
+          click: () => {
+            mainWindow.webContents.send('show-resize-dialog');
           }
         }
       ]
