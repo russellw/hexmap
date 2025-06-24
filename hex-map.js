@@ -503,7 +503,6 @@ class HexMapEditor {
     }
     
     showResizeDialog() {
-        console.log('showResizeDialog called');
         
         // Create modal dialog
         const modal = document.createElement('div');
