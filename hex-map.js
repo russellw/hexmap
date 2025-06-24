@@ -62,6 +62,7 @@ class HexMapEditor {
         const openBtn = document.getElementById('open-btn');
         const saveBtn = document.getElementById('save-btn');
         const saveAsBtn = document.getElementById('save-as-btn');
+        const exportPngBtn = document.getElementById('export-png-btn');
         const zoomInBtn = document.getElementById('zoom-in');
         const zoomOutBtn = document.getElementById('zoom-out');
         const zoomResetBtn = document.getElementById('zoom-reset');
@@ -108,6 +109,10 @@ class HexMapEditor {
         
         saveAsBtn.addEventListener('click', () => {
             this.saveAs();
+        });
+        
+        exportPngBtn.addEventListener('click', () => {
+            this.exportPNG();
         });
         
         zoomInBtn.addEventListener('click', () => {
@@ -163,6 +168,10 @@ class HexMapEditor {
             
             ipcRenderer.on('show-resize-dialog', () => {
                 this.showResizeDialog();
+            });
+            
+            ipcRenderer.on('export-png', () => {
+                this.exportPNG();
             });
         }
     }
@@ -693,6 +702,56 @@ class HexMapEditor {
                 dialog.querySelector('#dialog-cancel').click();
             }
         });
+    }
+    
+    exportPNG() {
+        // Create a temporary canvas for export
+        const exportCanvas = document.createElement('canvas');
+        const exportCtx = exportCanvas.getContext('2d');
+        
+        // Calculate the actual map bounds
+        const padding = 20;
+        const mapPixelWidth = this.mapWidth * this.hexSize * 3/2 + this.hexSize/2;
+        const mapPixelHeight = this.mapHeight * this.hexSize * Math.sqrt(3) + this.hexSize * Math.sqrt(3)/2;
+        
+        exportCanvas.width = mapPixelWidth + padding * 2;
+        exportCanvas.height = mapPixelHeight + padding * 2;
+        
+        // Save current state
+        const originalCtx = this.ctx;
+        const originalCanvas = this.canvas;
+        const originalOffsetX = this.offsetX;
+        const originalOffsetY = this.offsetY;
+        
+        // Temporarily switch to export canvas
+        this.ctx = exportCtx;
+        this.canvas = exportCanvas;
+        this.offsetX = padding - (originalCanvas.width / 2 - (this.mapWidth * this.hexSize * 3/4));
+        this.offsetY = padding - (originalCanvas.height / 2 - (this.mapHeight * this.hexSize * Math.sqrt(3)/2));
+        
+        // Set white background
+        exportCtx.fillStyle = '#ffffff';
+        exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+        
+        // Render the map
+        this.render();
+        
+        // Restore original state
+        this.ctx = originalCtx;
+        this.canvas = originalCanvas;
+        this.offsetX = originalOffsetX;
+        this.offsetY = originalOffsetY;
+        
+        // Get image data and save
+        const imageData = exportCanvas.toDataURL('image/png');
+        
+        if (typeof ipcRenderer !== 'undefined') {
+            ipcRenderer.invoke('export-png-dialog', imageData).then(result => {
+                if (result.success) {
+                    console.log('PNG exported successfully to:', result.filePath);
+                }
+            });
+        }
     }
 }
 

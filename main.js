@@ -73,6 +73,14 @@ function createWindow() {
         },
         { type: 'separator' },
         {
+          label: 'Export as PNG...',
+          accelerator: 'CmdOrCtrl+E',
+          click: async () => {
+            mainWindow.webContents.send('export-png');
+          }
+        },
+        { type: 'separator' },
+        {
           label: 'Exit',
           accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
           click: () => {
@@ -136,6 +144,24 @@ ipcMain.handle('save-map-direct', async (event, mapData, filePath) => {
 ipcMain.on('update-title', (event, filePath) => {
   currentFilePath = filePath;
   updateWindowTitle();
+});
+
+ipcMain.handle('export-png-dialog', async (event, imageData) => {
+  const result = await dialog.showSaveDialog(mainWindow, {
+    filters: [
+      { name: 'PNG Images', extensions: ['png'] },
+      { name: 'All Files', extensions: ['*'] }
+    ],
+    defaultPath: 'hexmap.png'
+  });
+  
+  if (!result.canceled) {
+    // Remove data URL prefix
+    const base64Data = imageData.replace(/^data:image\/png;base64,/, '');
+    fs.writeFileSync(result.filePath, Buffer.from(base64Data, 'base64'));
+    return { success: true, filePath: result.filePath };
+  }
+  return { success: false };
 });
 
 app.whenReady().then(createWindow);
