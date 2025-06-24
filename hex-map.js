@@ -9,6 +9,11 @@ class HexMapEditor {
         this.hexSize = 20;
         this.baseHexSize = 20;
         this.zoomLevel = 1;
+        this.offsetX = 0;
+        this.offsetY = 0;
+        this.isDragging = false;
+        this.lastMouseX = 0;
+        this.lastMouseY = 0;
         this.hexMap = new Map();
         this.selectedTerrain = 'unknown';
         this.brushSize = 1;
@@ -99,13 +104,21 @@ class HexMapEditor {
         
         
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+        this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+        this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
         this.canvas.addEventListener('click', (e) => this.handleClick(e));
         this.canvas.addEventListener('dblclick', (e) => this.handleDoubleClick(e));
         this.canvas.addEventListener('wheel', (e) => this.handleWheel(e));
         this.canvas.addEventListener('mouseleave', () => {
             this.hoveredHex = null;
+            this.isDragging = false;
             this.render();
         });
+        
+        // Touch events for tablets/mobile
+        this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e));
+        this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e));
+        this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
         
     }
     
@@ -160,13 +173,15 @@ class HexMapEditor {
     hexToPixel(q, r) {
         const x = this.hexSize * (3/2 * q);
         const y = this.hexSize * (Math.sqrt(3)/2 * q + Math.sqrt(3) * r);
-        return { x: x + this.canvas.width / 2 - (this.mapWidth * this.hexSize * 3/4), 
-                 y: y + this.canvas.height / 2 - (this.mapHeight * this.hexSize * Math.sqrt(3)/2) };
+        return { x: x + this.canvas.width / 2 - (this.mapWidth * this.hexSize * 3/4) + this.offsetX, 
+                 y: y + this.canvas.height / 2 - (this.mapHeight * this.hexSize * Math.sqrt(3)/2) + this.offsetY };
     }
     
     pixelToHex(x, y) {
-        const offsetX = x - (this.canvas.width / 2 - (this.mapWidth * this.hexSize * 3/4));
-        const offsetY = y - (this.canvas.height / 2 - (this.mapHeight * this.hexSize * Math.sqrt(3)/2));
+        const adjustedX = x - this.offsetX;
+        const adjustedY = y - this.offsetY;
+        const offsetX = adjustedX - (this.canvas.width / 2 - (this.mapWidth * this.hexSize * 3/4));
+        const offsetY = adjustedY - (this.canvas.height / 2 - (this.mapHeight * this.hexSize * Math.sqrt(3)/2));
         
         const q = (2/3 * offsetX) / this.hexSize;
         const r = (-1/3 * offsetX + Math.sqrt(3)/3 * offsetY) / this.hexSize;
@@ -295,10 +310,38 @@ class HexMapEditor {
         return results;
     }
     
+    handleMouseDown(e) {
+        if (e.button === 2) { // Right mouse button
+            e.preventDefault();
+            this.isDragging = true;
+            this.lastMouseX = e.clientX;
+            this.lastMouseY = e.clientY;
+            this.canvas.style.cursor = 'grabbing';
+        }
+    }
+    
+    handleMouseUp(e) {
+        if (e.button === 2) { // Right mouse button
+            this.isDragging = false;
+            this.canvas.style.cursor = 'crosshair';
+        }
+    }
+    
     handleMouseMove(e) {
         const rect = this.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
+        
+        if (this.isDragging) {
+            const deltaX = e.clientX - this.lastMouseX;
+            const deltaY = e.clientY - this.lastMouseY;
+            this.offsetX += deltaX;
+            this.offsetY += deltaY;
+            this.lastMouseX = e.clientX;
+            this.lastMouseY = e.clientY;
+            this.render();
+            return;
+        }
         
         const hex = this.pixelToHex(x, y);
         
@@ -309,7 +352,7 @@ class HexMapEditor {
             document.getElementById('hex-info').textContent = `Hex: (${hex.q}, ${hex.r})${nameText}`;
         } else {
             this.hoveredHex = null;
-            document.getElementById('hex-info').textContent = 'Hover over hexes to see coordinates | Double-click to name';
+            document.getElementById('hex-info').textContent = 'Hover over hexes to see coordinates | Double-click to name | Right-drag to pan';
         }
         
         this.render();
@@ -352,6 +395,33 @@ class HexMapEditor {
         }
     }
     
+    handleTouchStart(e) {
+        e.preventDefault();
+        if (e.touches.length === 1) {
+            this.isDragging = true;
+            this.lastMouseX = e.touches[0].clientX;
+            this.lastMouseY = e.touches[0].clientY;
+        }
+    }
+    
+    handleTouchMove(e) {
+        e.preventDefault();
+        if (this.isDragging && e.touches.length === 1) {
+            const deltaX = e.touches[0].clientX - this.lastMouseX;
+            const deltaY = e.touches[0].clientY - this.lastMouseY;
+            this.offsetX += deltaX;
+            this.offsetY += deltaY;
+            this.lastMouseX = e.touches[0].clientX;
+            this.lastMouseY = e.touches[0].clientY;
+            this.render();
+        }
+    }
+    
+    handleTouchEnd(e) {
+        e.preventDefault();
+        this.isDragging = false;
+    }
+    
     handleWheel(e) {
         e.preventDefault();
         
@@ -385,6 +455,8 @@ class HexMapEditor {
     resetZoom() {
         this.zoomLevel = 1.0;
         this.hexSize = this.baseHexSize;
+        this.offsetX = 0;
+        this.offsetY = 0;
         this.updateZoomDisplay();
         this.render();
     }
