@@ -14,6 +14,9 @@ class HexMapEditor {
         this.isDragging = false;
         this.lastMouseX = 0;
         this.lastMouseY = 0;
+        this.touchStartX = 0;
+        this.touchStartY = 0;
+        this.touchMoved = false;
         this.hexMap = new Map();
         this.hoveredHex = null;
         this.selectedHex = null;
@@ -401,28 +404,59 @@ class HexMapEditor {
     handleTouchStart(e) {
         e.preventDefault();
         if (e.touches.length === 1) {
-            this.isDragging = true;
-            this.lastMouseX = e.touches[0].clientX;
-            this.lastMouseY = e.touches[0].clientY;
+            this.touchStartX = e.touches[0].clientX;
+            this.touchStartY = e.touches[0].clientY;
+            this.touchMoved = false;
+            this.isDragging = false;
         }
     }
     
     handleTouchMove(e) {
         e.preventDefault();
-        if (this.isDragging && e.touches.length === 1) {
-            const deltaX = e.touches[0].clientX - this.lastMouseX;
-            const deltaY = e.touches[0].clientY - this.lastMouseY;
-            this.offsetX += deltaX;
-            this.offsetY += deltaY;
-            this.lastMouseX = e.touches[0].clientX;
-            this.lastMouseY = e.touches[0].clientY;
-            this.render();
+        if (e.touches.length === 1) {
+            const deltaX = e.touches[0].clientX - this.touchStartX;
+            const deltaY = e.touches[0].clientY - this.touchStartY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            
+            if (distance > 10) { // Start dragging if moved more than 10 pixels
+                if (!this.isDragging) {
+                    this.isDragging = true;
+                    this.lastMouseX = this.touchStartX;
+                    this.lastMouseY = this.touchStartY;
+                }
+                this.touchMoved = true;
+                
+                const currentDeltaX = e.touches[0].clientX - this.lastMouseX;
+                const currentDeltaY = e.touches[0].clientY - this.lastMouseY;
+                this.offsetX += currentDeltaX;
+                this.offsetY += currentDeltaY;
+                this.lastMouseX = e.touches[0].clientX;
+                this.lastMouseY = e.touches[0].clientY;
+                this.render();
+            }
         }
     }
     
     handleTouchEnd(e) {
         e.preventDefault();
+        
+        if (e.touches.length === 0 && !this.touchMoved) {
+            // This was a tap, not a drag
+            const rect = this.canvas.getBoundingClientRect();
+            const x = this.touchStartX - rect.left;
+            const y = this.touchStartY - rect.top;
+            
+            const hex = this.pixelToHex(x, y);
+            
+            if (this.hexMap.has(`${hex.q},${hex.r}`)) {
+                this.selectedHex = hex;
+                this.updateSelectedHexInfo();
+                this.render();
+            }
+        }
+        
         this.isDragging = false;
+        this.touchMoved = false;
     }
     
     handleWheel(e) {
