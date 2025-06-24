@@ -709,10 +709,12 @@ class HexMapEditor {
         const exportCanvas = document.createElement('canvas');
         const exportCtx = exportCanvas.getContext('2d');
         
-        // Calculate the actual map bounds
-        const padding = 20;
-        const mapPixelWidth = this.mapWidth * this.hexSize * 3/2 + this.hexSize/2;
-        const mapPixelHeight = this.mapHeight * this.hexSize * Math.sqrt(3) + this.hexSize * Math.sqrt(3)/2;
+        // Calculate the actual map bounds more accurately
+        const padding = 40;
+        // For hex grid: width = (mapWidth-1) * hexSize * 3/2 + hexSize * 2
+        // Height = mapHeight * hexSize * sqrt(3) + hexSize * sqrt(3)/2
+        const mapPixelWidth = (this.mapWidth - 1) * this.hexSize * 3/2 + this.hexSize * 2;
+        const mapPixelHeight = this.mapHeight * this.hexSize * Math.sqrt(3);
         
         exportCanvas.width = mapPixelWidth + padding * 2;
         exportCanvas.height = mapPixelHeight + padding * 2;
@@ -722,25 +724,52 @@ class HexMapEditor {
         const originalCanvas = this.canvas;
         const originalOffsetX = this.offsetX;
         const originalOffsetY = this.offsetY;
+        const originalHexSize = this.hexSize;
+        
+        // Use base hex size for consistent export regardless of zoom
+        this.hexSize = this.baseHexSize;
         
         // Temporarily switch to export canvas
         this.ctx = exportCtx;
         this.canvas = exportCanvas;
-        this.offsetX = padding - (originalCanvas.width / 2 - (this.mapWidth * this.hexSize * 3/4));
-        this.offsetY = padding - (originalCanvas.height / 2 - (this.mapHeight * this.hexSize * Math.sqrt(3)/2));
+        
+        // Calculate proper offset to center the map in the export canvas
+        this.offsetX = padding;
+        this.offsetY = padding;
         
         // Set white background
         exportCtx.fillStyle = '#ffffff';
         exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
         
-        // Render the map
-        this.render();
+        // Render each hex directly with proper positioning
+        for (let [key, hex] of this.hexMap) {
+            const x = this.hexSize * (3/2 * hex.q) + this.offsetX;
+            const y = this.hexSize * (Math.sqrt(3)/2 * hex.q + Math.sqrt(3) * hex.r) + this.offsetY;
+            
+            const color = this.terrainColors[hex.terrain];
+            this.drawHex(x, y, this.hexSize, color, '#666', 1);
+            
+            // Draw hex name if it exists
+            if (hex.name && this.hexSize > 15) {
+                exportCtx.save();
+                exportCtx.fillStyle = '#ffffff';
+                exportCtx.strokeStyle = '#000000';
+                exportCtx.lineWidth = 2;
+                exportCtx.font = `${Math.max(8, this.hexSize * 0.3)}px Arial`;
+                exportCtx.textAlign = 'center';
+                exportCtx.textBaseline = 'middle';
+                exportCtx.strokeText(hex.name, x, y);
+                exportCtx.fillText(hex.name, x, y);
+                exportCtx.restore();
+            }
+        }
         
         // Restore original state
         this.ctx = originalCtx;
         this.canvas = originalCanvas;
         this.offsetX = originalOffsetX;
         this.offsetY = originalOffsetY;
+        this.hexSize = originalHexSize;
         
         // Get image data and save
         const imageData = exportCanvas.toDataURL('image/png');
