@@ -711,10 +711,25 @@ class HexMapEditor {
         
         // Calculate the actual map bounds more accurately
         const padding = 40;
-        // For hex grid: width = (mapWidth-1) * hexSize * 3/2 + hexSize * 2
-        // Height = mapHeight * hexSize * sqrt(3) + hexSize * sqrt(3)/2
-        const mapPixelWidth = (this.mapWidth - 1) * this.hexSize * 3/2 + this.hexSize * 2;
-        const mapPixelHeight = this.mapHeight * this.hexSize * Math.sqrt(3);
+        const hexRadius = this.baseHexSize;
+        
+        // Calculate bounds by finding min/max coordinates of all hexes
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        
+        for (let [key, hex] of this.hexMap) {
+            const x = hexRadius * (3/2 * hex.q);
+            const y = hexRadius * (Math.sqrt(3)/2 * hex.q + Math.sqrt(3) * hex.r);
+            
+            // Account for hex radius in all directions
+            minX = Math.min(minX, x - hexRadius);
+            maxX = Math.max(maxX, x + hexRadius);
+            minY = Math.min(minY, y - hexRadius);
+            maxY = Math.max(maxY, y + hexRadius);
+        }
+        
+        const mapPixelWidth = maxX - minX;
+        const mapPixelHeight = maxY - minY;
         
         exportCanvas.width = mapPixelWidth + padding * 2;
         exportCanvas.height = mapPixelHeight + padding * 2;
@@ -733,9 +748,9 @@ class HexMapEditor {
         this.ctx = exportCtx;
         this.canvas = exportCanvas;
         
-        // Calculate proper offset to center the map in the export canvas
-        this.offsetX = padding;
-        this.offsetY = padding;
+        // Calculate proper offset to position map correctly in export canvas
+        this.offsetX = padding - minX;
+        this.offsetY = padding - minY;
         
         // Set white background
         exportCtx.fillStyle = '#ffffff';
